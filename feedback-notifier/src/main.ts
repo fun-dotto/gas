@@ -17,18 +17,18 @@ interface NotionPayload {
   };
 }
 
-interface DiscordEmbed {
+interface SlackAttachment {
+  color: string;
   title: string;
-  url: string;
-  color: number;
-  fields: Array<{ name: string; value: string; inline?: boolean }>;
-  footer: { text: string };
-  timestamp: string;
+  title_link: string;
+  fields: Array<{ title: string; value: string; short?: boolean }>;
+  footer: string;
+  ts: number;
 }
 
-interface DiscordPayload {
-  content: string;
-  embeds: DiscordEmbed[];
+interface SlackPayload {
+  text: string;
+  attachments: SlackAttachment[];
 }
 
 function syncToNotion(e: FormResponse): void {
@@ -36,7 +36,7 @@ function syncToNotion(e: FormResponse): void {
   const props = PropertiesService.getScriptProperties();
   const NOTION_API_TOKEN = props.getProperty("NOTION_API_TOKEN");
   const DATABASE_ID = props.getProperty("DATABASE_ID");
-  const DISCORD_WEBHOOK_URL = props.getProperty("DISCORD_WEBHOOK_URL");
+  const SLACK_WEBHOOK_URL = props.getProperty("SLACK_WEBHOOK_URL");
   const FORM_ID = props.getProperty("FORM_ID");
 
   if (!NOTION_API_TOKEN || !DATABASE_ID || !FORM_ID) {
@@ -124,38 +124,39 @@ function syncToNotion(e: FormResponse): void {
   const notionPageUrl: string =
     resData.url || `https://www.notion.so/${DATABASE_ID.replace(/-/g, "")}`;
 
-  // --- 4. Discord 通知送信 ---
-  if (DISCORD_WEBHOOK_URL) {
-    const discordPayload: DiscordPayload = {
-      content: "📢 **新しいフィードバックが届きました！**",
-      embeds: [
+  // --- 4. Slack 通知送信 ---
+  if (SLACK_WEBHOOK_URL) {
+    const slackPayload: SlackPayload = {
+      text: "📢 *新しいフィードバックが届きました！*",
+      attachments: [
         {
+          color: type === "バグ報告" ? "#ed4245" : "#3498db",
           title: pageTitle,
-          url: notionPageUrl,
-          color: type === "バグ報告" ? 15548997 : 3447003,
+          title_link: notionPageUrl,
           fields: [
-            { name: "種類", value: type || "なし", inline: true },
+            { title: "種類", value: type || "なし", short: true },
             {
-              name: "プラットフォーム",
+              title: "プラットフォーム",
               value: platform || "なし",
-              inline: true,
+              short: true,
             },
-            { name: "アプリVer", value: appVersion || "なし", inline: true },
+            { title: "アプリVer", value: appVersion || "なし", short: true },
             {
-              name: "詳細・内容",
+              title: "詳細・内容",
               value: (request || bugDetail || "なし").substring(0, 500),
             },
           ],
-          footer: { text: "Dotto Feedback System" },
-          timestamp: new Date().toISOString(),
+          footer: "Dotto Feedback System",
+          ts: Math.floor(timestamp.getTime() / 1000),
         },
       ],
     };
 
-    UrlFetchApp.fetch(DISCORD_WEBHOOK_URL, {
+    UrlFetchApp.fetch(SLACK_WEBHOOK_URL, {
       method: "post",
       headers: { "Content-Type": "application/json" },
-      payload: JSON.stringify(discordPayload),
+      payload: JSON.stringify(slackPayload),
+      muteHttpExceptions: true,
     });
   }
 }
