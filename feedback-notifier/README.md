@@ -1,6 +1,6 @@
 # Dotto Feedback Notifier
 
-Google Formsからのフィードバックを自動的にNotionとDiscordに通知するGoogle Apps Scriptプロジェクト。
+Google Formsからのフィードバックを自動的にNotionとSlackに通知するGoogle Apps Scriptプロジェクト。
 
 ## 技術スタック
 
@@ -23,7 +23,7 @@ Google Apps Scriptのエディタで以下のプロパティを設定してく�
 
 - `NOTION_API_TOKEN`: NotionのAPIトークン
 - `DATABASE_ID`: NotionのデータベースID
-- `DISCORD_WEBHOOK_URL`: DiscordのWebhook URL（オプション）
+- `SLACK_WEBHOOK_URL`: SlackのIncoming Webhook URL（オプション）
 
 ### 3. ビルド
 
@@ -71,5 +71,5 @@ pnpm deploy
 
 - Google Formsからフィードバックを受信
 - Notionデータベースに自動登録
-- Discord通知（オプション）
+- Slack通知（オプション）
 - バグ報告と機能要望の分類
